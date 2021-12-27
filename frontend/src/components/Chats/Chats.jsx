@@ -2,6 +2,7 @@ import React, { useContext, useState, useEffect } from "react";
 import { AuthContext } from "../../contexts/AuthContext";
 import { ChatContext } from "../../contexts/ChatContext";
 import { v4 as uuidv4 } from "uuid";
+import { stringAvatar } from "./useStyles";
 
 import moment from "moment";
 import {
@@ -88,7 +89,7 @@ export default function Chats() {
               className="chats"
               style={{
                 width: "50%",
-                // justifyContent: "space-between",
+                margin: "10px",
                 alignSelf:
                   String(chat.senderId) === String(loggedInUser.id)
                     ? "flex-end"
@@ -101,15 +102,25 @@ export default function Chats() {
                 justifyContent={"space-between"}
                 style={{
                   borderBottom: "1px solid black",
+                  borderStartStartRadius: "5px",
+                  borderStartEndRadius: "5px",
                   padding: "5px",
+                  background: "#016A42",
+                  color: "white",
                 }}
               >
-                <Avatar
-                  alt={chat.senderName}
-                  src={`/static/images/avatar.jpg`}
-                />{" "}
-                <Typography> {chat.senderName}</Typography>
-                <Box>
+                <Box display="flex" alignItems="center">
+                  <Avatar
+                    style={{ border: "1px solid #1976D2" }}
+                    {...stringAvatar(chat.senderName.toUpperCase(), 45, 45)}
+                    // src={`/hello world`}
+                  />
+                  <Typography style={{ margin: "0 10px " }}>
+                    {" "}
+                    {chat.senderName}
+                  </Typography>
+                </Box>
+                <Box display="flex" flexDirection="column" alignItems="center">
                   <Typography style={{ fontSize: "0.8rem" }}>
                     {moment(chat.created_at).format("MMMM Do YYYY")}
                   </Typography>
@@ -118,13 +129,26 @@ export default function Chats() {
                   </Typography>
                 </Box>
               </Box>
-              <Box sx={{ padding: "20px" }}>{chat.message}</Box>
-              <Box sx={{ padding: "20px" }}>
+              <Box sx={{ padding: "20px 10px", overflowWrap: "break-word" }}>
+                {chat.message}
+              </Box>
+              <Box sx={{ padding: "10px" }}>
                 <Stack spacing={2}>
-                  <Typography>{chat.status}</Typography>
+                  <Box display={"flex"} justifyContent={"flex-start"}>
+                    <Typography
+                      style={{
+                        background: "yellow",
+                        borderRadius: "5px",
+                        padding: "3px 5px",
+                        fontSize: "0.8rem",
+                      }}
+                    >
+                      {chat.status}
+                    </Typography>
+                  </Box>
                   {displaySetSatisfiedBtn(chat) && (
                     <Button
-                      size="small"
+                      color="primary"
                       onClick={() =>
                         handleUpdateChatStatus({
                           chatId: String(chat.id),
@@ -134,7 +158,7 @@ export default function Chats() {
                           status: chat.status,
                         })
                       }
-                      style={{ fontSize: "0.6rem" }}
+                      style={{ fontSize: "0.9rem" }}
                     >
                       click here if your Question has been answered
                     </Button>
@@ -142,7 +166,7 @@ export default function Chats() {
 
                   {displaySetAnsweredBtn(chat) && (
                     <Button
-                      size="small"
+                      color="primary"
                       onClick={() =>
                         handleUpdateChatStatus({
                           chatId: String(chat.id),
@@ -152,7 +176,7 @@ export default function Chats() {
                           status: "Answered",
                         })
                       }
-                      style={{ fontSize: "0.6rem" }}
+                      // style={{ fontSize: "0.6rem" }}
                     >
                       Customer is Satisfied , Click to set chat to Answered
                     </Button>
