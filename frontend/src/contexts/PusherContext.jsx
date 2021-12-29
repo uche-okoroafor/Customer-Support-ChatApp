@@ -29,8 +29,6 @@ const PusherProvider = (props) => {
     const channel = pusher.subscribe("chat");
 
     channel.bind("message", (data) => {
-      // console.log(data, "pusherData");
-
       setPusherData(data);
     });
   };
