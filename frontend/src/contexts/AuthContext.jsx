@@ -1,20 +1,17 @@
-import React, { useState } from "react";
-import axios from "axios";
-import { useContext, FunctionComponent, useEffect, useCallback } from "react";
+import React, { useState, useContext } from "react";
+import { useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom"; // import Paper from "@mui/material/Paper";
 import { logoutAPI } from "../helpers/Apis/logout";
 import loginWithCookies from "../helpers/Apis/loginWithCookies";
-import { matchPath, useLocation } from "react-router-dom";
-import { ChatContext } from "./ChatContext";
+import { useLocation } from "react-router-dom";
+import { SnackBarContext } from "./SnackBarContext";
 
 const AuthContext = React.createContext();
 
 const AuthProvider = (props) => {
-  const [errorMessage, setErrorMessage] = useState("");
-  const [userId, setUserId] = useState(0);
   const [isAgent, setIsAgent] = useState(false);
   const { pathname } = useLocation();
-
+  const { updateSnackBarMessage } = useContext(SnackBarContext);
   const [loggedInUser, setLoggedInUser] = useState({
     id: "",
     name: "",
@@ -47,13 +44,13 @@ const AuthProvider = (props) => {
     const checkLoginWithCookies = async () => {
       await loginWithCookies().then((data) => {
         if (data.success) {
+          updateSnackBarMessage("you are logged in");
           updateLoginContext(data.data);
           navigate("/dashboard");
         } else {
           if (pathname === "/sign-up" || loggedInUser) {
             return;
           }
-          console.log("auto working");
           // don't need to provide error feedback as this just means user doesn't have saved cookies or the cookies have not been authenticated on the backend
           setLoggedInUser(null);
           navigate("/login");
@@ -66,11 +63,9 @@ const AuthProvider = (props) => {
   return (
     <AuthContext.Provider
       value={{
-        userId,
         logout,
         updateLoginContext,
         loggedInUser,
-        errorMessage,
         isAgent,
       }}
     >

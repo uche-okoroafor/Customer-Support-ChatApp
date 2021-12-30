@@ -70,6 +70,8 @@ class ChatController extends Controller
         $validator = Validator::make($request->all(), [
             'customerName' => 'required|string',
             'customerEmail' => 'required|string',
+            'title' => 'required|string',
+            'mail' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -84,8 +86,8 @@ class ChatController extends Controller
         $customerName = $request->input('customerName');
         $customerEmail = $request->input('customerEmail');
         $notificationDetails = [
-            'title' => " Support: Answer to your enquiry",
-            'body' => "Hi $customerName,the answer to your enquiry is now avaliable , please kindly check the customer support application for more details.Thanks",
+            'title' =>$request->input('title') ,
+            'body' =>$request->input('mail'),
         ];
 
         \Mail::to($customerEmail)->send(new NotificationMail($notificationDetails));

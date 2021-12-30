@@ -1,9 +1,7 @@
-import React, { useState } from "react";
-import axios from "axios";
-import { useContext, createContext, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom"; // import Paper from "@mui/material/Paper";
-import { logoutAPI } from "../helpers/Apis/logout";
-import loginWithCookies from "../helpers/Apis/loginWithCookies";
+import React, { useState, useCallback } from "react";
+import { useContext, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { SnackBarContext } from "./SnackBarContext";
 import { fetchCustomers } from "../helpers/Apis/fetchCustomers";
 
 const CustomersContext = React.createContext();
@@ -12,25 +10,27 @@ const CustomersProvider = (props) => {
   const [customers, setCustomers] = useState([]);
   const [focusedCustomer, setFocusedCustomer] = useState({});
   const navigate = useNavigate();
+  const { updateSnackBarMessage } = useContext(SnackBarContext);
+
+  // updateFocusedCustomerDetails updates current customer's chats and details to the setFocusedCustomer state
 
   const updateFocusedCustomerDetails = (customerDetails) => {
     setFocusedCustomer(customerDetails);
   };
 
-  // console.log(focusedCustomer.id, "customerContext");
+  // handleFetchCustomers makes an api request to get current  customer chats or clicked customer chats
 
-  const handleFetchCustomers = async () => {
+  const handleFetchCustomers = useCallback(async () => {
     await fetchCustomers().then((data) => {
       if (data.success) {
         setCustomers(data.customers);
       } else {
-        // don't need to provide error feedback as this just means user doesn't have saved cookies or the cookies have not been authenticated on the backend
-        //   setLoggedInUser(null);
-        //   navigate("/login");
-        console.log("error");
+        updateSnackBarMessage(data.success);
+        console.error(data);
+        updateSnackBarMessage("Something went wrong,please try again later");
       }
     });
-  };
+  }, [navigate]);
 
   useEffect(() => {
     handleFetchCustomers();

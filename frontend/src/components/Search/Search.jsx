@@ -1,6 +1,4 @@
-import React, { useContext, useState, useEffect } from "react";
-import { AuthContext } from "../../contexts/AuthContext";
-import { ChatContext } from "../../contexts/ChatContext";
+import React, { useContext, useEffect } from "react";
 import { fetchSearchedCustomers } from "../../helpers/Apis/fetchCustomers";
 import { useDebounce } from "use-debounce";
 import List from "@mui/material/List";
@@ -8,18 +6,11 @@ import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import ListItemAvatar from "@mui/material/ListItemAvatar";
-import Checkbox from "@mui/material/Checkbox";
 import Avatar from "@mui/material/Avatar";
-import {
-  Button,
-  Grid,
-  Box,
-  Typography,
-  TextField,
-  Paper,
-} from "@material-ui/core";
-import { sendMessage } from "../../helpers/Apis/messages";
-import { Stack } from "@mui/material";
+import { stringAvatar } from "../../Pages/Dashboard/useStyles";
+import useStyles from "./useStyles";
+import { SnackBarContext } from "../../contexts/SnackBarContext";
+import { Box, TextField } from "@material-ui/core";
 
 export default function Search({
   setSearch,
@@ -27,33 +18,44 @@ export default function Search({
   setSearchResult,
   searchResult,
   handleFetchCustomer,
+  setLoadingSearch,
 }) {
-  const { displayedChats } = useContext(ChatContext);
-  const { loggedInUser } = useContext(AuthContext);
-  const [loading, setLoading] = useState(false);
   const [debouncedSearch] = useDebounce(search, 1000);
-  console.log(debouncedSearch, "debouncedSearch");
+  const { updateSnackBarMessage } = useContext(SnackBarContext);
+  const classes = useStyles();
   const handleChange = (e) => {
     setSearch(e.target.value);
   };
 
   useEffect(() => {
+    if (!search) {
+      return;
+    }
     async function fetchSearchedOptions() {
       // send request to backend API to get users limited to 20.
-      setLoading(true);
+      setLoadingSearch(true);
 
       fetchSearchedCustomers(debouncedSearch)
         .then((data) => {
           if (data.success) {
-            setSearchResult(data.message.data);
+            const fiteredData = data.message.data.filter(
+              (user) => String(user.senderId) === String(user.customerId)
+            );
+            setSearchResult(fiteredData);
+            setLoadingSearch(false);
           } else {
             setSearchResult([]);
+            setLoadingSearch(false);
           }
-          console.log(data);
         })
-        .catch((err) => console.log(err));
+        .catch((err) => {
+          updateSnackBarMessage(
+            "Something went wrong , please try again later"
+          );
+          console.error(err);
+        });
 
-      setLoading(false);
+      setLoadingSearch(false);
     }
 
     fetchSearchedOptions();
@@ -61,33 +63,45 @@ export default function Search({
 
   return (
     <>
-      <TextField
-        variant="outlined"
-        id="search"
-        fullWidth
-        margin="normal"
-        name="search"
-        autoComplete="search"
-        autoFocus
-        label="Search by Customer name or Active Message"
-        value={search}
-        //   disabled={!displayedChats.length && isAgent ? true : false}
-        onChange={handleChange}
-      />
-      <List
-        dense
-        sx={{ width: "100%", maxWidth: 360, bgcolor: "background.paper" }}
+      <Box
+        style={{
+          borderStartStartRadius: "5px",
+          borderStartEndRadius: "5px",
+          background: "#016A42",
+          display: "flex",
+          justifyContent: "center",
+        }}
       >
+        <TextField
+          variant="outlined"
+          id="search"
+          fullWidth
+          margin="normal"
+          name="search"
+          size="small"
+          className={classes.textField}
+          autoComplete="search"
+          label="Search for a Customer"
+          value={search}
+          style={{
+            background: "white",
+            borderRadius: "5px",
+            width: "90%",
+          }}
+          onChange={handleChange}
+        />
+      </Box>
+      <List dense sx={{ width: "100%", maxWidth: 360 }}>
         {searchResult &&
           searchResult.map((list) => (
             <ListItem
               key={list.id}
-              secondaryAction={
-                <Checkbox
-                  edge="end"
-                  inputProps={{ "aria-labelledby": list.id }}
-                />
-              }
+              style={{
+                background: "white",
+                margin: "10px auto",
+                borderRadius: "5px",
+                width: "95%",
+              }}
               disablePadding
             >
               <ListItemButton
@@ -95,8 +109,8 @@ export default function Search({
               >
                 <ListItemAvatar>
                   <Avatar
-                    alt={list.senderName}
-                    src={`/static/images/avatar.jpg`}
+                    style={{ border: "1px solid #1976D2" }}
+                    {...stringAvatar(list.senderName.toUpperCase(), 45, 45)}
                   />
                 </ListItemAvatar>
                 <ListItemText id={list.id} primary={list.senderName} />

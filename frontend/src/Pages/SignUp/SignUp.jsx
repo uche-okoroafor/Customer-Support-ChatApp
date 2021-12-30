@@ -1,27 +1,28 @@
 import React, { useContext, useState } from "react";
+import LoginIcon from "@mui/icons-material/Login";
 import { AuthContext } from "../../contexts/AuthContext";
-import Paper from "@material-ui/core/Paper";
-import Box from "@material-ui/core/Box";
-import Container from "@material-ui/core/Container";
+import { Paper } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import TextField from "@material-ui/core/TextField";
-import Typography from "@material-ui/core/Typography";
+import CircularProgress from "@material-ui/core/CircularProgress";
 import Button from "@material-ui/core/Button";
-import { useNavigate } from "react-router-dom"; // import Paper from "@mui/material/Paper";
-import InputLabel from "@material-ui/core/InputLabel";
+import { useNavigate } from "react-router-dom";
 import MenuItem from "@material-ui/core/MenuItem";
-import FormControl from "@material-ui/core/FormControl";
-import Select from "@material-ui/core/Select";
+import * as Yup from "yup";
+import useStyles from "./useStyles";
+import { Formik } from "formik";
 import { signUp } from "../../helpers/Apis/signUp";
+import { SnackBarContext } from "../../contexts/SnackBarContext";
 
 const SignUp = (props) => {
-  const { errorMessage, updateLoginContext } = useContext(AuthContext);
-  const [name, setName] = useState("");
-  const [password, setPassword] = useState("");
-  const [email, setEmail] = useState("");
-  const [userHandler, setUserHandler] = useState("");
+  const { updateLoginContext } = useContext(AuthContext);
+  const classes = useStyles();
+  const [isSubmitting, setSubmitting] = useState(false);
+  const { updateSnackBarMessage } = useContext(SnackBarContext);
   const navigate = useNavigate();
 
-  function handleSubmit(data) {
+  const handleSubmit = ({ name, email, password, userHandler }) => {
+    setSubmitting(true);
     signUp({
       name,
       email,
@@ -29,108 +30,197 @@ const SignUp = (props) => {
       password_confirmation: password,
       userHandler,
     }).then((data) => {
-      if (data.error) {
-        console.error({ error: data.error.message });
-        // setSubmitting(false);
-        // updateSnackBarMessage(data.error.message);
+      if (!data.success) {
+        console.error({ error: data.message });
+        setSubmitting(false);
+        updateSnackBarMessage(data.message.email[0]);
       } else if (data.success) {
         localStorage.setItem("user-token", data.token);
-        console.log(data, "data");
         updateLoginContext(data.data);
       } else {
-        // should not get here from backend but this catch is for an unknown issue
-        console.error({ data });
-
-        // setSubmitting(false);
-        // updateSnackBarMessage('An unexpected error occurred. Please try again');
+        //   // should not get here from backend but this catch is for an unknown issue
+        console.error({ error: data.message });
+        setSubmitting(false);
+        updateSnackBarMessage("An unexpected error occurred. Please try again");
       }
     });
-  }
+  };
   return (
-    <Container>
-      <Typography variant="h3">Sign-Up</Typography>
-      <Button onClick={() => navigate("/login")}>signin</Button>
+    <Box className={classes.root}>
+      <Box style={{ position: "relative" }}>
+        <Typography
+          className={classes.welcomeText}
+          sx={{
+            fontSize: { sm: "1.8rem", xs: "1.5rem" },
+          }}
+          align="center"
+        >
+          Welcome to our customer
+          <br /> support room
+        </Typography>
+
+        <Box
+          sx={{
+            textAlign: { xs: "right" },
+            position: { xs: "relative", sm: "absolute" },
+          }}
+          className={classes.loginBtn}
+        >
+          {" "}
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            endIcon={<LoginIcon />}
+            onClick={() => navigate("/login")}
+          >
+            <Typography variant="subtitle">Sign in</Typography>
+          </Button>
+        </Box>
+      </Box>
 
       <Box display="flex" justifyContent="center">
-        <Paper style={{ width: "70%", marginTop: "3rem", padding: "5rem" }}>
-          <Box>
-            <TextField
-              variant="outlined"
-              id="name"
-              fullWidth
-              margin="normal"
-              name="name"
-              autoComplete="name"
-              autoFocus
-              label="name"
-              value={name}
-              onChange={(e) => {
-                setName(e.target.value);
-              }}
-            />
-          </Box>
-          <Box>
-            <TextField
-              variant="outlined"
-              id="email"
-              fullWidth
-              margin="normal"
-              name="email"
-              autoComplete="email"
-              autoFocus
-              label="email"
-              // helperText={touched.email ? errors.email : ''}
-              // error={touched.email && Boolean(errors.email)}
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-              }}
-            />
-          </Box>
-          <Box>
-            <TextField
-              variant="outlined"
-              id="password"
-              label="password"
-              type="password"
-              fullWidth
-              margin="normal"
-              name="password"
-              autoFocus
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-              }}
-            />
-          </Box>
+        <Paper
+          className={classes.formContainer}
+          sx={{
+            width: { lg: "30%", md: "40%", sm: "50%", xs: "70%" },
+            marginTop: "2rem",
+            padding: "1rem 2rem",
+            backgroundColor: "rgb(1 ,106, 66 ,0.8)",
+            color: "white",
+          }}
+        >
+          <Typography variant="h6" align="center">
+            Create an account
+          </Typography>
+          <Formik
+            initialValues={{
+              email: "",
+              password: "",
+            }}
+            validationSchema={Yup.object().shape({
+              name: Yup.string().required("name is required"),
+              userHandler: Yup.string().required("userHandler is required"),
+              email: Yup.string()
+                .required("Email is required")
+                .email("Email is not valid"),
+              password: Yup.string()
+                .required("Password is required")
+                .max(100, "Password is too long")
+                .min(6, "Password too short"),
+            })}
+            onSubmit={handleSubmit}
+          >
+            {({ handleSubmit, handleChange, values, touched, errors }) => (
+              <form onSubmit={handleSubmit} noValidate>
+                <Box>
+                  <TextField
+                    variant="outlined"
+                    id="name"
+                    fullWidth
+                    margin="normal"
+                    name="name"
+                    autoComplete="name"
+                    autoFocus
+                    label="Name"
+                    className={classes.textField}
+                    size="small"
+                    helperText={touched.name ? errors.name : ""}
+                    error={touched.name && Boolean(errors.name)}
+                    value={values.name}
+                    onChange={handleChange}
+                  />
+                </Box>
+                <Box>
+                  <TextField
+                    variant="outlined"
+                    id="email"
+                    fullWidth
+                    margin="normal"
+                    name="email"
+                    autoComplete="email"
+                    size="small"
+                    label="Email"
+                    className={classes.textField}
+                    helperText={touched.email ? errors.email : ""}
+                    error={touched.email && Boolean(errors.email)}
+                    value={values.email}
+                    onChange={handleChange}
+                  />
+                </Box>
+                <Box>
+                  <TextField
+                    variant="outlined"
+                    id="password"
+                    label="Password"
+                    type="password"
+                    fullWidth
+                    margin="normal"
+                    name="password"
+                    size="small"
+                    className={classes.textField}
+                    helperText={touched.password ? errors.password : ""}
+                    error={touched.password && Boolean(errors.password)}
+                    value={values.password}
+                    onChange={handleChange}
+                  />
+                </Box>
 
-          <Box sx={{ minWidth: 120 }}>
-            <FormControl fullWidth>
-              {/* <InputLabel id="demo-simple-select-label">Handler</InputLabel> */}
-              <Select
-                variant="outlined"
-                labelId="demo-simple-select-label"
-                id="demo-simple-select"
-                value={userHandler}
-                label="Handler"
-                onChange={(e) => {
-                  setUserHandler(e.target.value);
-                }}
-              >
-                <MenuItem value={"customer"}>Customer</MenuItem>
-                <MenuItem value={"supportAgent"}>Support Agent</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
+                <Box>
+                  <TextField
+                    id="userHandler"
+                    label="Handler"
+                    name="userHandler"
+                    select
+                    className={classes.textField}
+                    value={values.userHandler ? values.userHandler : ""}
+                    helperText={touched.userHandler ? errors.userHandler : ""}
+                    error={touched.userHandler && Boolean(errors.userHandler)}
+                    onChange={handleChange}
+                    variant="outlined"
+                    fullWidth
+                    size="small"
+                  >
+                    <MenuItem value={"customer"}>Customer</MenuItem>
+                    <MenuItem value={"supportAgent"}>Support Agent</MenuItem>
+                  </TextField>
+                </Box>
 
-          <Box>
-            <Button onClick={() => handleSubmit()} variant="contained">
-              Sign Up
-            </Button>
-          </Box>
+                <Box
+                  display="flex"
+                  justifyContent="center"
+                  style={{
+                    paddingTop: "2rem",
+                  }}
+                >
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    variant="contained"
+                    style={{ padding: "10px 50px" }}
+                    size="large"
+                    color="primary"
+                  >
+                    {isSubmitting ? (
+                      <CircularProgress
+                        style={{
+                          color: "white",
+                          fontSize: 0,
+                          width: "30px",
+                          height: "30px",
+                        }}
+                      />
+                    ) : (
+                      "Sign Up"
+                    )}
+                  </Button>
+                </Box>
+              </form>
+            )}
+          </Formik>
         </Paper>
       </Box>
-    </Container>
+    </Box>
   );
 };
 

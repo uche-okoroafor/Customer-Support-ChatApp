@@ -2,16 +2,20 @@ import React, { useContext, useState, useEffect } from "react";
 import { AuthContext } from "../../contexts/AuthContext";
 import { ChatContext } from "../../contexts/ChatContext";
 import { CustomersContext } from "../../contexts/CustomersContext";
-import { Button, Grid, Box, Typography, TextField } from "@material-ui/core";
+import { Button, TextField } from "@material-ui/core";
 import { useDebounce } from "use-debounce";
-
+import useStyles from "./useStyles";
+import { SnackBarContext } from "../../contexts/SnackBarContext";
 import {
   sendMessage,
   addAgentToCustomerChat,
   updateChatStatus,
+  sendEmailNotification,
 } from "../../helpers/Apis/messages";
 import SendIcon from "@mui/icons-material/Send";
 import { v4 as uuidv4 } from "uuid";
+
+const title = " Support: Answer to your enquiry";
 
 export default function ChatBox() {
   const { updateDisplayedChats, displayedChats, handleFetchCustomerChats } =
@@ -20,6 +24,8 @@ export default function ChatBox() {
   const { loggedInUser, isAgent } = useContext(AuthContext);
   const [message, setMessage] = useState("");
   const [debouncedMessage] = useDebounce();
+  const classes = useStyles();
+  const { updateSnackBarMessage } = useContext(SnackBarContext);
 
   const messageDetails = {
     customerId: isAgent ? String(focusedCustomer.id) : String(loggedInUser.id),
@@ -33,6 +39,7 @@ export default function ChatBox() {
     customerSatisfied: "No",
     id: uuidv4(),
   };
+  const mail = ` Hi ${messageDetails.customerName},the answer to your enquiry is now avaliable , please kindly check the customer support application for more details.Thanks`;
 
   const handleAddProcessingStatus = () => {
     for (let index = displayedChats.length - 1; index >= 0; index--) {
@@ -46,11 +53,13 @@ export default function ChatBox() {
           customerId: String(displayedChats[index].customerId),
           event: "Update Status",
           status: "In Progress",
-        })
-          .then((data) => {
-            console.log(data, "In Progress");
-          })
-          .catch((err) => console.error);
+        }).then((data) => {
+          if (data.success) {
+            return;
+          } else {
+            updateSnackBarMessage(data.message);
+          }
+        });
       }
     }
   };
@@ -58,6 +67,8 @@ export default function ChatBox() {
   useEffect(() => {
     isAgent && handleAddProcessingStatus();
   }, [debouncedMessage]);
+
+  // handleAddAgentToCustomerChat Adds the responding agent to the customer chat
 
   const handleAddAgentToCustomerChat = () => {
     for (let index = displayedChats.length - 1; index >= 0; index--) {
@@ -67,9 +78,16 @@ export default function ChatBox() {
           String(loggedInUser.id)
         )
           .then((data) => {
-            // console.log(data, "added");
+            updateSnackBarMessage(
+              "Responding Agent has been added to customer question"
+            );
           })
-          .catch((err) => console.error);
+          .catch((err) => {
+            updateSnackBarMessage(
+              "Something went wrong,please try again later"
+            );
+            console.error(err);
+          });
       }
     }
   };
@@ -86,54 +104,51 @@ export default function ChatBox() {
     messageInstance.status = isAgent ? "supportAgent" : "Not Answered";
     sendMessage(messageInstance)
       .then((data) => {
-        if (data.success)
-          return handleFetchCustomerChats(
-            messageDetails.customerId,
-            "updateOne"
-          );
+        if (data.success) {
+          //customer will receive email notification when ever the support agent responds
+          isAgent && sendEmailNotification({ mail, title });
+          return handleFetchCustomerChats(messageDetails.customerId);
+        } else {
+          console.log(data);
+          updateSnackBarMessage(data.message);
+        }
       })
-      .catch((err) => console.log(err));
+      .catch((err) => {
+        updateSnackBarMessage("Something went wrong,please try again later");
+        console.error(err);
+      });
     setMessage("");
   };
 
   return (
     <>
-      <Box
-        sx={{
-          position: "fixed",
-          bottom: 0,
-          display: "flex",
-          alignItems: "center",
-          background: "white",
+      <TextField
+        variant="outlined"
+        id="chatbox"
+        fullWidth
+        style={{ background: "white", margin: 0, borderRadius: "5px" }}
+        margin="normal"
+        name="chatbox"
+        className={classes.textField}
+        autoFocus
+        size="small"
+        label="Type your message"
+        value={message}
+        disabled={!displayedChats.length && isAgent ? true : false}
+        onChange={(e) => {
+          setMessage(e.target.value);
         }}
+      />
+      <Button
+        color="primary"
+        variant="contained"
+        disabled={!displayedChats.length && isAgent ? true : false}
+        onClick={handleSendMessage}
+        style={{ margin: "0 10px" }}
+        endIcon={<SendIcon />}
       >
-        <TextField
-          variant="outlined"
-          id="chatbox"
-          fullWidth
-          style={{ width: "40rem" }}
-          margin="normal"
-          name="chatbox"
-          autoFocus
-          label="Type your message"
-          value={message}
-          disabled={!displayedChats.length && isAgent ? true : false}
-          onChange={(e) => {
-            setMessage(e.target.value);
-          }}
-        />
-        <Box>
-          <Button
-            color="primary"
-            disabled={!displayedChats.length && isAgent ? true : false}
-            onClick={handleSendMessage}
-            style={{ margin: "0 10px" }}
-            endIcon={<SendIcon />}
-          >
-            send
-          </Button>
-        </Box>
-      </Box>
+        send
+      </Button>
     </>
   );
 }

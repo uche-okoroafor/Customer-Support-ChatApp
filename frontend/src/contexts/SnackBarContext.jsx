@@ -1,26 +1,9 @@
-import {
-  useState,
-  useContext,
-  createContext,
-  FunctionComponent,
-  SyntheticEvent,
-  useCallback,
-} from "react";
-import Snackbar, { SnackbarCloseReason } from "@material-ui/core/Snackbar";
+import { useState, createContext, useCallback } from "react";
+import Snackbar from "@material-ui/core/Snackbar";
 import IconButton from "@material-ui/core/IconButton";
 import CloseIcon from "@material-ui/icons/Close";
-import axios from "axios";
-import { useNavigate, useLocation } from "react-router-dom";
-import { logoutAPI } from "../helpers/Apis/logout";
-import loginWithCookies from "../helpers/Apis/loginWithCookies";
-import { fetchCustomerChats } from "../helpers/Apis/messages";
-import { AuthContext } from "./AuthContext";
-import Pusher from "pusher-js";
-import { CustomersContext } from "./CustomersContext";
 
-const SnackBarContext = createContext({
-  // updateSnackBarMessage: () => null,
-});
+const SnackBarContext = createContext();
 
 const SnackBarProvider = (props) => {
   const [message, setMessage] = useState(null);

@@ -10,7 +10,7 @@ export const fetchCustomerChats = async customerId => {
     body: JSON.stringify({ customerId })
   }
   return await fetch(
-    `http://localhost:8000/api/fetch-customer-messages`,
+    `http://localhost:8000/api/message/fetch-customer-messages`,
     fetchOptions
   )
     .then(res => res.json())
@@ -77,6 +77,27 @@ export const addAgentToCustomerChat = async (messageId, agentId) => {
   }
   return await fetch(
     `http://localhost:8000/api/message/add-agentId-to-message`,
+    fetchOptions
+  )
+    .then(res => res.json())
+    .catch(() => ({
+      error: { message: 'Unable to connect to server. Please try again' }
+    }))
+}
+
+export const sendEmailNotification = async (mail, title) => {
+  const tokenId = ''
+  const token = await localStorage.getItem(tokenId)
+  const fetchOptions = {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + token,
+      'Content-type': 'application/json'
+    },
+    body: JSON.stringify({ mail, title })
+  }
+  return await fetch(
+    `http://localhost:8000/api/message/send-notification-mail`,
     fetchOptions
   )
     .then(res => res.json())

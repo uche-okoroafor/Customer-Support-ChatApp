@@ -1,3 +1,5 @@
+import { MuiThemeProvider } from '@material-ui/core'
+import { theme } from './themes/theme'
 import { BrowserRouter, Route, Navigate, Routes } from 'react-router-dom'
 import ProtectedRoute from './components/ProtectedRoute'
 import Login from './Pages/Login/Login'
@@ -13,26 +15,28 @@ import { SnackBarProvider } from './contexts/SnackBarContext'
 
 function App () {
   return (
-    <BrowserRouter>
-      <SnackBarProvider>
-        <AuthProvider>
-          <PusherProvider>
-            <CustomersProvider>
-              <ChatProvider>
-                <Routes>
-                  <Route exact path='/' element={<Navigate to='/login' />} />
-                  <Route exact path='/login' element={<Login />} />
-                  <Route exact path='/sign-up' element={<SignUp />} />
-                  <Route exact path='/dashboard' element={<ProtectedRoute />}>
-                    <Route exact path='/dashboard' element={<Dashboard />} />
-                  </Route>
-                </Routes>
-              </ChatProvider>
-            </CustomersProvider>
-          </PusherProvider>
-        </AuthProvider>
-      </SnackBarProvider>
-    </BrowserRouter>
+    <MuiThemeProvider theme={theme}>
+      <BrowserRouter>
+        <SnackBarProvider>
+          <AuthProvider>
+            <PusherProvider>
+              <CustomersProvider>
+                <ChatProvider>
+                  <Routes>
+                    <Route exact path='/' element={<Navigate to='/login' />} />
+                    <Route exact path='/login' element={<Login />} />
+                    <Route exact path='/sign-up' element={<SignUp />} />
+                    <Route exact path='/dashboard' element={<ProtectedRoute />}>
+                      <Route exact path='/dashboard' element={<Dashboard />} />
+                    </Route>
+                  </Routes>
+                </ChatProvider>
+              </CustomersProvider>
+            </PusherProvider>
+          </AuthProvider>
+        </SnackBarProvider>
+      </BrowserRouter>
+    </MuiThemeProvider>
   )
 }
 

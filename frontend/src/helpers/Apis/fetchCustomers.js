@@ -9,7 +9,7 @@ export const fetchCustomers = async userData => {
     }
   }
   return await fetch(
-    `http://localhost:8000/api/fetch-all-customers`,
+    `http://localhost:8000/api/customer/fetch-all-customers`,
     fetchOptions
   )
     .then(res => res.json())
@@ -29,7 +29,10 @@ export const fetchSearchedCustomers = async searchItem => {
     },
     body: JSON.stringify({ searchItem })
   }
-  return await fetch(`http://localhost:8000/api/search-message`, fetchOptions)
+  return await fetch(
+    `http://localhost:8000/api/customer/search-message`,
+    fetchOptions
+  )
     .then(res => res.json())
     .catch(() => ({
       error: { message: 'Unable to connect to server. Please try again' }

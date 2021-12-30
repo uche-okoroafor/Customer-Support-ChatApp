@@ -28,10 +28,17 @@ Route::group(['prefix' => 'users', 'middleware' => 'CORS'], function ($router) {
     Route::get('/logout', [UserController::class, 'logout'])->name('logout.user');
 });
 
-Route::post('/message/send', [ChatController::class, 'sendMessage']);
-Route::post('/fetch-customer-messages', [ChatController::class, 'getMessages']);
-Route::patch('/message/update-status', [ChatController::class, 'updateMessageStatus']);
-Route::post('/search-message', [SearchMessageController::class, 'searchMessage']);
-Route::get('/fetch-all-customers', [CustomersController::class, 'fetchAllCustomers']);
-Route::patch('/message/add-agentId-to-message', [ChatController::class, 'addAgentToCustomerChat']);
-Route::post('/message/send-notification-mail', [ChatController::class, 'sendNotificationMail']);
+Route::group(['prefix' => 'message', 'middleware' => 'CORS'], function ($router) {
+    Route::patch('/add-agentId-to-message', [ChatController::class, 'addAgentToCustomerChat']);
+    Route::post('/send-notification-mail', [ChatController::class, 'sendNotificationMail']);
+    Route::post('/send', [ChatController::class, 'sendMessage']);
+    Route::patch('/update-status', [ChatController::class, 'updateMessageStatus']);
+    Route::post('/fetch-customer-messages', [ChatController::class, 'getMessages']);
+
+});
+
+Route::group(['prefix' => 'customer', 'middleware' => 'CORS'], function ($router) {
+    Route::post('/search-message', [SearchMessageController::class, 'searchMessage']);
+    Route::get('/fetch-all-customers', [CustomersController::class, 'fetchAllCustomers']);
+
+});
