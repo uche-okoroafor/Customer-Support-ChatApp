@@ -14,8 +14,8 @@ const PusherProvider = (props) => {
   };
 
   const subscribeToPusher = () => {
-    const pusher = new Pusher("be523c427aa3a2c84a9d", {
-      cluster: "eu",
+    const pusher = new Pusher(process.env.REACT_APP_MIX_PUSHER_APP_KEY, {
+      cluster: process.env.REACT_APP_PUSHER_CLUSTER,
       encrypted: true,
     });
     const channel = pusher.subscribe("chat");

@@ -11,7 +11,6 @@ import { ChatProvider } from './contexts/ChatContext'
 import { CustomersProvider } from './contexts/CustomersContext'
 import { PusherProvider } from './contexts/PusherContext'
 import { SnackBarProvider } from './contexts/SnackBarContext'
-// import { SnackBarProvider } from './contexts/SnackBarContext'
 
 function App () {
   return (

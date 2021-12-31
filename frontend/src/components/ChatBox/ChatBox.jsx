@@ -109,7 +109,6 @@ export default function ChatBox() {
           isAgent && sendEmailNotification({ mail, title });
           return handleFetchCustomerChats(messageDetails.customerId);
         } else {
-          console.log(data);
           updateSnackBarMessage(data.message);
         }
       })
