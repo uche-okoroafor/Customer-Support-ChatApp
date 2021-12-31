@@ -24,7 +24,7 @@ const Login = () => {
     login({ email, password }).then((data) => {
       if (data.error) {
         setSubmitting(false);
-        updateSnackBarMessage(data.error);
+        updateSnackBarMessage(data.error.message);
       } else if (data.success) {
         localStorage.setItem("user-token", data.token);
         updateLoginContext(data.data);
