@@ -21,9 +21,11 @@ When the customer asks a question, the first and default status of the question 
 *		Can mark the question as "SPAM". This is a kind of 4th status for the question
 *		When the question is answered the customer should be notified by email
 
-
-
-
+## General Features:
+* User login/sign up authentication.
+* Real-time Chat, changes will update on screen.
+ 
+ 
 ## Tools and Technologies Used:
 ### Frontend
 * [React](https://reactjs.org/) - The framework used for developing the components and UI.
