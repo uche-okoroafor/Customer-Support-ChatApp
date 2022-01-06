@@ -1,12 +1,8 @@
 import React, { useState } from "react";
-import axios from "axios";
-import { useContext, createContext, useEffect, useCallback } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { logoutAPI } from "../helpers/Apis/logout";
-import loginWithCookies from "../helpers/Apis/loginWithCookies";
+import { useContext, useEffect, useCallback } from "react";
 import { fetchCustomerChats, updateChatStatus } from "../helpers/Apis/messages";
 import { AuthContext } from "./AuthContext";
-import Pusher from "pusher-js";
+import { SnackBarContext } from "./SnackBarContext";
 import { CustomersContext } from "./CustomersContext";
 import { PusherContext } from "./PusherContext";
 import moment from "moment";
@@ -18,28 +14,35 @@ const ChatProvider = (props) => {
   const [displayedChats, setDisplayedChats] = useState([]);
   const { focusedCustomer, updateFocusedCustomerDetails } =
     useContext(CustomersContext);
-  const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const [isLoading, setLoading] = useState(false);
+  const { updateSnackBarMessage } = useContext(SnackBarContext);
+
+  // updateDisplayedChats updates chats to the displayedChats state
 
   const updateDisplayedChats = (chats) => {
     setDisplayedChats(chats);
   };
-  // console.log(displayedChats, "allchats");
-  const handleFetchCustomerChats = async (customerId, params) => {
+
+  // handleFetchCustomers makes an api request to get current  customer chats or clicked customer chats
+  const handleFetchCustomerChats = useCallback(async (customerId) => {
     fetchCustomerChats(customerId)
       .then((data) => {
-        // if (params === "updateAll") {
-
-        updateDisplayedChats(data.messages);
-        updateFocusedCustomerDetails(data.customerDetails);
-        changeChatStatusToAnswerdAfter24Hour(data.messages);
-        // } else {
-        //   displayedChats[displayedChats.length - 1] =
-        //     data.messages[data.messages.length - 1];
-        // }
+        if (data.success) {
+          updateDisplayedChats(data.messages);
+          updateFocusedCustomerDetails(data.customerDetails);
+          changeChatStatusToAnswerdAfter24Hour(data.messages);
+          setLoading(false);
+        } else {
+          updateSnackBarMessage(data.messages);
+        }
       })
-      .catch((err) => console.log(err));
-  };
+      .catch((err) => {
+        updateSnackBarMessage("Something went wrong,please try again later");
+        console.error(err);
+      });
+  }, []);
+
+  // changeChatStatusToAnswerdAfter24Hour changes the status of the customers chat to Answered after 24hours
 
   const changeChatStatusToAnswerdAfter24Hour = (messages) => {
     for (const message of messages) {
@@ -58,13 +61,20 @@ const ChatProvider = (props) => {
           status: "Answered",
         })
           .then((data) => {
-            // console.log(data, "hours");
+            updateSnackBarMessage("customer chat status updated");
           })
-          .catch((err) => console.error(err));
+          .catch((err) => {
+            updateSnackBarMessage(
+              "Something went wrong,please try again later"
+            );
+            console.error(err);
+          });
       }
     }
   };
 
+  // eventSendConditions is the conditions that will be considered before sending the chat to the client or agent
+  // it directs  the data to the right customer or agent
   const eventSendConditions = () => {
     if (
       String(pusherData.message.customerId) === String(focusedCustomer.id) &&
@@ -77,6 +87,8 @@ const ChatProvider = (props) => {
 
     return false;
   };
+
+  // eventUpdateConditions is the conditions that will be considered before updating a chat status
 
   const eventUpdateConditions = () => {
     if (
@@ -91,32 +103,25 @@ const ChatProvider = (props) => {
   };
 
   const updateNewMessages = () => {
-    console.log(pusherData, eventSendConditions(), eventUpdateConditions());
     if (eventSendConditions()) {
-      displayedChats[displayedChats.length - 1] = pusherData.message;
-      console.log("pusher");
-      handleFetchCustomerChats(pusherData.customerId, "updateOne");
-      // setTimeout(() => {
-      //   resetPusherData();
-      // }, 100);
+      displayedChats.push(pusherData.message);
+      handleFetchCustomerChats(pusherData.customerId);
     } else if (eventUpdateConditions()) {
-      handleFetchCustomerChats(pusherData.customerId, "updateOne");
-      console.log("pusher");
+      handleFetchCustomerChats(pusherData.customerId);
     }
+  };
+  const updateIsLoading = (condition) => {
+    setLoading(condition);
   };
 
   useEffect(() => {
     if (pusherData) {
       return updateNewMessages();
     }
-    if (loggedInUser && loggedInUser.userHandler === "customer") {
-      handleFetchCustomerChats(String(loggedInUser.id), "updateAll");
+    if (!loggedInUser) {
+      updateDisplayedChats([]);
     }
-
-    // if (pathname === "/login" || pathname === "/sign-up") {
-    //   updateDisplayedChats([]);
-    // }
-  }, [loggedInUser, pusherData]);
+  }, [pusherData, loggedInUser]);
 
   return (
     <ChatContext.Provider
@@ -125,6 +130,8 @@ const ChatProvider = (props) => {
         updateDisplayedChats,
         handleFetchCustomerChats,
         changeChatStatusToAnswerdAfter24Hour,
+        isLoading,
+        updateIsLoading,
       }}
     >
       {props.children}
